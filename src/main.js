@@ -33,8 +33,7 @@ scene.add(light);
 
 const loader = new GLTFLoader();
 
-loader.load(
-  "/character/scene.gltf",
+loader.load(`${import.meta.env.BASE_URL}character/scene.gltf`,
   (gltf) => {
     gltf.scene.traverse((obj) => {
       if (obj.isMesh) {
