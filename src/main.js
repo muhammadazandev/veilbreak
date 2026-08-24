@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
 
 const scene = new THREE.Scene();
@@ -10,37 +11,74 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 0, 0);
+
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
+  antialias: true
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true
+
 document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshStandardMaterial({
-  color: 0x66aa77,
-});
+camera.position.z = 10;
 
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+const light = new THREE.DirectionalLight(0xffffff, 4);
+light.position.set(5, 5, 5);
+light.castShadow = true
 
-const light = new THREE.DirectionalLight(0xffffff, 3);
-light.position.set(2, 3, 4);
 scene.add(light);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
+const loader = new GLTFLoader();
 
-camera.position.z = 4;
+loader.load(
+  "/character/scene.gltf",
+  (gltf) => {
+    gltf.scene.traverse((obj) => {
+      if (obj.isMesh) {
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+      }
+    })
+    
+    gltf.scene.scale.set(2,2,2);
+    gltf.scene.position.z = 3;
+    scene.add(gltf.scene);
+
+    const box = new THREE.Box3();
+    box.setFromObject(gltf.scene);
+
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    setTimeout(() => {
+      console.log('Size:', size);
+  console.log('Minimum:', box.min);
+  console.log('Maximum:', box.max);
+    }, 3000)
+  }
+);
+
+const groundGeom = new THREE.PlaneGeometry(15,10);
+const groundMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 1
+});
+
+const ground = new THREE.Mesh(groundGeom, groundMaterial)
+
+ground.rotation.x = -Math.PI / 2
+ground.receiveShadow = true;
+ground.position.y = 0
+
+scene.add(ground)
 
 function animate() {
   requestAnimationFrame(animate);
-
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-
+  
   renderer.render(scene, camera);
 }
 
-animate();
+animate()
